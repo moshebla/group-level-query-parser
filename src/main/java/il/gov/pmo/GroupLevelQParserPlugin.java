@@ -1,12 +1,14 @@
 package il.gov.pmo;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.query.FilterQuery;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.schema.FieldType;
 import org.apache.solr.search.QParser;
@@ -82,33 +84,41 @@ public class GroupLevelQParserPlugin extends QParserPlugin {
                             "groups must be supplied");
                 }
 
+                String[] splitGroups = qstr.split(delimiter);
+                int cost = calcCost(splitGroups);
+                final boolean shouldUsePostFilter = cost >= MAX_PRE_FILTER_GROUPS;
+
+                return shouldUsePostFilter? new GroupLevelFilter(cost, createUserGroupSet(splitGroups),
+                        fName, delimiter.charAt(0)): createPreFilter(fName, splitGroups);
+            }
+
+            private int calcCost(String[] splitGroups) {
+                Object costParam = localParams.get(CommonParams.COST);
+                int cost = costParam!=null? tryParseParamInt(costParam, CommonParams.COST): 0;
+                // ensure user does not set a large or query as a pre filter
+                return splitGroups.length >= getMaxPreFilterGroups()? Math.max(cost, 100): Math.min(cost, 99);
+            }
+
+            private Query createPreFilter(String fName, String[] splitGroups) {
                 FieldType ft = req.getSchema().getFieldType(fName);
-
-                Set<String> allowedGroups = createUserGroupSet(qstr, delimiter);
-
-                Iterator<String> allowedGroupsIter = allowedGroups.iterator();
-                List<BytesRef> bytesRefs = new ArrayList<>(allowedGroups.size());
+                List<BytesRef> bytesRefs = new ArrayList<>(splitGroups.length);
                 BytesRefBuilder term = new BytesRefBuilder();
 
-                for (int i = 0; i < allowedGroups.size(); i++) {
-                    String stringVal = allowedGroupsIter.next();
-                    //logic same as TermQParserPlugin
+                for(String group: splitGroups) {
+                    // same logic as TermQParserPlugin
                     if (ft != null) {
-                        ft.readableToIndexed(stringVal, term);
+                        ft.readableToIndexed(group, term);
                     } else {
-                        term.copyChars(stringVal);
+                        term.copyChars(group);
                     }
                     bytesRefs.add(term.toBytesRef());
                 }
 
-                Object costParam = localParams.get(CommonParams.COST);
-                int cost = costParam!=null? tryParseParamInt(costParam, CommonParams.COST): 0;
-
-                return new GroupLevelFilter(cost, allowedGroups, fName, delimiter.charAt(0), bytesRefs);
+                return new FilterQuery(new TermInSetQuery(fName, bytesRefs));
             }
 
-            private Set<String> createUserGroupSet(String userGroups, String delimiter) {
-                return Arrays.stream(userGroups.split(delimiter))
+            private Set<String> createUserGroupSet(String[] userGroups) {
+                return Arrays.stream(userGroups)
                         .collect(Collectors.toSet());
             }
         };
