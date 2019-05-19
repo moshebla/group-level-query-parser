@@ -9,7 +9,7 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class QueryParserTest extends SolrTestCaseJ4 {
+public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
 
     private static AtomicInteger idCounter = new AtomicInteger();
 

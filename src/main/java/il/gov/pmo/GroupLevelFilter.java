@@ -20,8 +20,7 @@ public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {
     private final String fName;
     private final char delimiter;
 
-    public GroupLevelFilter(int cost, Set<String> groups, String fieldName, char delimiter) {
-        setCost(groups.size() >= GroupLevelQParserPlugin.getMaxPreFilterGroups()? Math.max(cost, 100): Math.min(cost, 99));
+    public GroupLevelFilter(Set<String> groups, String fieldName, char delimiter) {
         setCache(false);
         this.allowedGroups = groups;
         this.fName = fieldName;
