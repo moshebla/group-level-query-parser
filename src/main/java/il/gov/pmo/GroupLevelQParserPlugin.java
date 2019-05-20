@@ -10,38 +10,26 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 
-import static il.gov.pmo.GroupLevelUtils.tryParseParamInt;
-
 public class GroupLevelQParserPlugin extends QParserPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-//    private static int MAX_PRE_FILTER_GROUPS = 80;
-    private static final String PRE_FILTER_GROUP_BOUND = "preFilterGroupBound";
-    private static final String DELIMITER_PARAM = "delimiter";
-
-//    public static int getMaxPreFilterGroups() {
-//        return MAX_PRE_FILTER_GROUPS;
-//    }
-//
-//    static void setMaxPreFilterGroups(int maxPreFilterGroups) {
-//        MAX_PRE_FILTER_GROUPS = maxPreFilterGroups;
-//    }
+    private static final String MAX_PRE_FILTER_GROUP_BOUND_PARAM = "maxPreFilterGroupBound";
 
     @Override
     public void init(NamedList args) {
-        Object bound = args.get(PRE_FILTER_GROUP_BOUND);
+        Object bound = args.get(MAX_PRE_FILTER_GROUP_BOUND_PARAM);
 
         if (bound == null) {
-            log.warn(PRE_FILTER_GROUP_BOUND + " was not supplied, using default value");
-            return;
+            log.warn(MAX_PRE_FILTER_GROUP_BOUND_PARAM + " was not supplied, using default value");
+            bound = GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND;
         }
 
-        GroupLevelUtils.MAX_PRE_FILTER_GROUPS = tryParseParamInt(bound, PRE_FILTER_GROUP_BOUND);
+        GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = GroupLevelUtils.tryParseParamInt(bound, MAX_PRE_FILTER_GROUP_BOUND_PARAM);
     }
 
     @Override
     public QParser createParser(String qstr, SolrParams localParams, SolrParams params, SolrQueryRequest req) {
-        return new GroupLevelQParser(qstr, localParams, params, req, DELIMITER_PARAM);
+        return new GroupLevelQParser(qstr, localParams, params, req);
     }
 }

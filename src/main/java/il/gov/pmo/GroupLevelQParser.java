@@ -17,11 +17,9 @@ import org.apache.solr.search.SyntaxError;
 import java.util.ArrayList;
 import java.util.List;
 
-import il.gov.pmo.GroupLevelUtils;
-
 public class GroupLevelQParser extends QParser {
 
-    private static String DELIMITER_PARAM = "delimiter";
+    private static final String DELIMITER_PARAM = "delimiter";
 
     /**
      * Constructor for the QParser
@@ -31,15 +29,11 @@ public class GroupLevelQParser extends QParser {
      * @param params      The rest of the {@link SolrParams}
      * @param req         The original {@link SolrQueryRequest}.
      */
-    public GroupLevelQParser(String qstr, SolrParams localParams, SolrParams params, SolrQueryRequest req, String delimiterParam) {
-        super(qstr, localParams, params, req);
-        DELIMITER_PARAM = delimiterParam;
-    }
-
-    public GroupLevelQParser(String qstr, SolrParams localParams, SolrParams params, SolrQueryRequest req){
+    public GroupLevelQParser(String qstr, SolrParams localParams, SolrParams params, SolrQueryRequest req) {
         super(qstr, localParams, params, req);
     }
 
+    // TODO - can be tested only with solr core
     @Override
     public Query parse() throws SyntaxError {
         String fName = localParams.get(CommonParams.FIELD);
@@ -48,7 +42,7 @@ public class GroupLevelQParser extends QParser {
                     CommonParams.FIELD + " param must be supplied");
         }
 
-        String delimiter = localParams.get(DELIMITER_PARAM, ";");
+        String delimiter = localParams.get(DELIMITER_PARAM, GroupLevelUtils.GROUPS_DELIMITER);
 
         if (delimiter.length() > 1) {
             throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
@@ -63,7 +57,7 @@ public class GroupLevelQParser extends QParser {
         String[] splitGroups = qstr.split(delimiter);
         int cost = calcCost(splitGroups);
 
-        ExtendedQueryBase q = cost >= GroupLevelUtils.MAX_PRE_FILTER_GROUPS ? new GroupLevelFilter(GroupLevelUtils.objectListToObjectSet(splitGroups),
+        ExtendedQueryBase q = cost >= GroupLevelUtils.POST_FILTER_LOWER_BOUND ? new GroupLevelFilter(GroupLevelUtils.objectListToObjectSet(splitGroups),
                 fName, delimiter.charAt(0)) : createPreFilter(fName, splitGroups);
         q.setCost(cost);
         return q;
@@ -73,9 +67,10 @@ public class GroupLevelQParser extends QParser {
         Object costParam = localParams.get(CommonParams.COST);
         int cost = costParam != null ? GroupLevelUtils.tryParseParamInt(costParam, CommonParams.COST) : 0;
         // ensure user does not set a large or query as a pre filter
-        return splitGroups.length >= GroupLevelUtils.MAX_PRE_FILTER_GROUPS ? Math.max(cost, GroupLevelUtils.POSTFILTER_UPPER_BOUND) : Math.min(cost, GroupLevelUtils.PREFILTER_UPPER_BOUND);
+        return splitGroups.length >= GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND ? Math.max(cost, GroupLevelUtils.POST_FILTER_LOWER_BOUND) : Math.min(cost, GroupLevelUtils.PRE_FILTER_UPPER_BOUND);
     }
 
+    // TODO - can be tested only with solr core
     private ExtendedQueryBase createPreFilter(String fName, String[] splitGroups) {
         FieldType ft = req.getSchema().getFieldType(fName);
         List<BytesRef> bytesRefs = new ArrayList<>(splitGroups.length);
@@ -93,9 +88,4 @@ public class GroupLevelQParser extends QParser {
 
         return new FilterQuery(new TermInSetQuery(fName, bytesRefs));
     }
-
-//    private Set<String> createUserGroupSet(String[] userGroups) {
-//        return Arrays.stream(userGroups)
-//                .collect(Collectors.toSet());
-//    }
 }

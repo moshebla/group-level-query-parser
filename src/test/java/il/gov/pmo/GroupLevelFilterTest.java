@@ -1,40 +1,21 @@
 package il.gov.pmo;
 
-import com.google.common.collect.Sets;
-import org.apache.lucene.search.Query;
 import org.apache.solr.SolrTestCaseJ4;
-import org.apache.solr.search.ExtendedQueryBase;
-import org.apache.solr.search.QParser;
-import org.apache.solr.search.QParserPlugin;
 import org.junit.Test;
-
-import java.util.Set;
 
 public class GroupLevelFilterTest extends SolrTestCaseJ4 {
 
-    private static final String fieldName = "testField";
-    private static final char delimiter = ',';
+    private static final String fName = "testField";
 
     @Test
     public void testPreFilter() throws Exception {
-//        Set<String> groups = Sets.newHashSet("a", "b");
-//        GroupLevelFilter filter = new GroupLevelFilter(groups, fieldName, delimiter);
-//        assertEquals(filter.getCost(), 5);
-//
-//        // ensure low number of groups is still run as a pre-filter
-//        filter = new GroupLevelFilter(groups, fieldName, delimiter);
-//        assertEquals(filter.getCost(), 99);
-    }
+        String groupsStr = "1,2";
+        String[] groupsList = groupsStr.split(GroupLevelUtils.GROUPS_DELIMITER);
+        GroupLevelFilter filterA = new GroupLevelFilter(GroupLevelUtils.objectListToObjectSet(groupsList), fName, GroupLevelUtils.GROUPS_DELIMITER.charAt(0));
+        GroupLevelFilter filterB = filterA;
+        assertEquals(filterA, filterB);
 
-    @Test
-    public void testPostFilter() throws Exception {
-//        GroupLevelQParserPlugin.setMaxPreFilterGroups(5);
-//        Set<String> groups = Sets.newHashSet("a", "b", "c", "d", "e");
-//        GroupLevelFilter filter = new GroupLevelFilter(groups, fieldName, delimiter);
-//         assertEquals(filter.getCost(), 100);
-//
-//        // ensure high number of groups is run as a post-filter
-//        filter = new GroupLevelFilter(groups, fieldName, delimiter);
-//        assertEquals(filter.getCost(), 1500);
+        GroupLevelFilter otherFilter = new GroupLevelFilter(GroupLevelUtils.objectListToObjectSet(groupsList), "otherFieldName", GroupLevelUtils.GROUPS_DELIMITER.charAt(0));
+        assertNotEquals(filterA, otherFilter);
     }
 }

@@ -7,9 +7,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 class GroupLevelUtils {
-    static int MAX_PRE_FILTER_GROUPS = 80;
-    static int PREFILTER_UPPER_BOUND = 99;
-    static int POSTFILTER_UPPER_BOUND = 100;
+    static int MAX_PRE_FILTER_GROUP_BOUND = 80;
+    static int PRE_FILTER_UPPER_BOUND = 99;
+    static int POST_FILTER_LOWER_BOUND = 100;
+    static String GROUPS_DELIMITER = ",";
 
     static int tryParseParamInt(Object integer, String paramName) {
         try {
