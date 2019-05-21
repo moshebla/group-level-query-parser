@@ -26,9 +26,10 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     }
 
     @Test
-    public void GroupsQueryQParserPluginTest() throws Exception {
+    public void groupLevelQParserPluginPreFilterTest() throws Exception {
         indexSampleData();
 
+        // seems  to be a design problem - do we really want to let the client control the group level? like that one could bypass the client and fetch data out of his group level
         assertQ(req("q", "*:*"),
                 "//*[@numFound='10']");
 
@@ -40,7 +41,23 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     }
 
     @Test
-    public void GroupsQueryQParserPluginExceptionTest() throws Exception {
+    public void groupLevelQParserPluginPostFilterTest() throws Exception {
+        indexSampleData();
+
+        GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 1;
+
+        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a"),
+                "//*[@numFound='10']");
+
+        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a,b,c"),
+                "//*[@numFound='10']");
+
+        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}d"),
+                "//*[@numFound='0']");
+    }
+
+    @Test
+    public void groupLevelQParserPluginExceptionTest() throws Exception {
         indexSampleData();
 
         assertQEx("should fail because no groups were supplied",
@@ -51,10 +68,13 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     }
 
     private void indexSampleData() throws Exception {
-        for(int i = 0; i < 10; i++) {
-            addAndGetVersion(sdoc("id", idCounter.incrementAndGet(), "groups", "a,b,c"),
+        String[] mockGroups = new String[]{"a", "b", "c"};
+
+        for (int i = 0; i < 10; i++) {
+            addAndGetVersion(sdoc("id", idCounter.incrementAndGet(), "groups", mockGroups),
                     params("wt", "json"));
         }
         assertU(commit());
+        //JQ(req("q", "*:*"))
     }
 }

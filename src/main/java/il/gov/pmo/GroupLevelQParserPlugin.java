@@ -22,7 +22,7 @@ public class GroupLevelQParserPlugin extends QParserPlugin {
 
         if (bound == null) {
             log.warn(MAX_PRE_FILTER_GROUP_BOUND_PARAM + " was not supplied, using default value");
-            bound = GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND;
+            return;
         }
 
         GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = GroupLevelUtils.tryParseParamInt(bound, MAX_PRE_FILTER_GROUP_BOUND_PARAM);
