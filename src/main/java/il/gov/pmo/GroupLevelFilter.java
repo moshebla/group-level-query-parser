@@ -27,6 +27,7 @@ public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {
         this.delimiter = delimiter;
     }
 
+    // TODO - can be tested only with solr core
     @Override
     public DelegatingCollector getFilterCollector(IndexSearcher searcher) {
         return new GroupLevelFilterCollector();
