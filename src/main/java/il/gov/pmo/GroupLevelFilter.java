@@ -1,20 +1,15 @@
 package il.gov.pmo;
 
-import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.util.BytesRef;
 import org.apache.solr.common.SolrException;
-import org.apache.solr.common.util.StrUtils;
 import org.apache.solr.search.DelegatingCollector;
 import org.apache.solr.search.ExtendedQueryBase;
 import org.apache.solr.search.PostFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {

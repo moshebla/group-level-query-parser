@@ -29,7 +29,7 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     public void groupLevelQParserPluginPreFilterTest() throws Exception {
         indexSampleData();
 
-        // seems  to be a design problem - do we really want to let the client control the group level? like that one could bypass the client and fetch data out of his group level
+        // TODO - seems  to be a design problem - do we really want to let the client control the group level? like that one could bypass the client and fetch data out of his group level
         assertQ(req("q", "*:*"),
                 "//*[@numFound='10']");
 
