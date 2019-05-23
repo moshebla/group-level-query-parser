@@ -4,6 +4,7 @@ import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.common.SolrException;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,14 +30,24 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     public void groupLevelQParserPluginPreFilterTest() throws Exception {
         indexSampleData();
 
-        // TODO - seems  to be a design problem - do we really want to let the client control the group level? like that one could bypass the client and fetch data out of his group level
+        // TODO - seems  to be a design problem - do we really want to let the client control the group level?
+        //  like that one could bypass the client and fetch data out of his group level
         assertQ(req("q", "*:*"),
                 "//*[@numFound='10']");
 
-        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a,b,c"),
+
+        // TODO - does groups have to be indexed to support Pre-Filter?
+        // TODO - does cost take into account if Pre-Filter? what if negative? seems like it doesn't really matter to solr..
+        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=-10 f=groups delimiter=','}a"),
                 "//*[@numFound='10']");
 
-        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}d"),
+        GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 4;
+        assertQ("cost should be fixed if out of the filter type range - 1000 to 99",
+                req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a,b,c"),
+                "//*[@numFound='10']");
+
+        assertQ("user's groups levels does not fit to the existing documents group levels",
+                req("q", "*:*", "fq", "{!acl cache=false cost=65 f=groups delimiter=','}d"),
                 "//*[@numFound='0']");
     }
 
@@ -46,14 +57,29 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
 
         GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 1;
 
-        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a"),
+        assertQ("",
+                req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a"),
                 "//*[@numFound='10']");
 
-        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a,b,c"),
+        assertQ("",
+                req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a,b,c"),
                 "//*[@numFound='10']");
 
-        assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}d"),
+        assertQ("user's groups levels does not fit to the existing documents group levels",
+                req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}d"),
                 "//*[@numFound='0']");
+    }
+
+    @Ignore
+    @Test
+    public void groupLevelQParserPluginPostFilterTestFails() throws Exception {
+
+        // TODO - in case where cost is different and get corrected by the condition in parse method
+        //  the cost is being override to the original cost (here 30) in QParser.getQuery() [called after parse() (this function)]
+        assertQ("cost should be fixed if out of the filter type range - 30 to 100",
+                req("q", "*:*", "fq", "{!acl cache=false cost=30 f=groups delimiter=','}a,b,c"),
+                "//*[@numFound='10']");
+
     }
 
     @Test

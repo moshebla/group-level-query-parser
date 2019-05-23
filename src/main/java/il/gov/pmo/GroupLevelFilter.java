@@ -18,7 +18,8 @@ public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {
     private final String fName;
     private final char delimiter;
 
-    public GroupLevelFilter(Set<String> groups, String fieldName, char delimiter) {
+    public
+    GroupLevelFilter(Set<String> groups, String fieldName, char delimiter) {
         setCache(false);
         this.allowedGroups = groups;
         this.fName = fieldName;

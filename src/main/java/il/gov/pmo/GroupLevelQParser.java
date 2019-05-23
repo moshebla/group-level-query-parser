@@ -33,7 +33,6 @@ public class GroupLevelQParser extends QParser {
         super(qstr, localParams, params, req);
     }
 
-    // TODO - can be tested only with solr core
     @Override
     public Query parse() throws SyntaxError {
         String fName = localParams.get(CommonParams.FIELD);
@@ -70,14 +69,13 @@ public class GroupLevelQParser extends QParser {
         return splitGroups.length >= GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND ? Math.max(cost, GroupLevelUtils.POST_FILTER_LOWER_BOUND) : Math.min(cost, GroupLevelUtils.PRE_FILTER_UPPER_BOUND);
     }
 
-    // TODO - can be tested only with solr core
     private ExtendedQueryBase createPreFilter(String fName, String[] splitGroups) {
         FieldType ft = req.getSchema().getFieldType(fName);
         List<BytesRef> bytesRefs = new ArrayList<>(splitGroups.length);
         BytesRefBuilder term = new BytesRefBuilder();
 
         for (String group : splitGroups) {
-            // same logic as TermQParserPlugin
+            // same logic as TermQParserPlugin - take into account the type
             if (ft != null) {
                 ft.readableToIndexed(group, term);
             } else {
