@@ -42,12 +42,12 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
     @Test
     public void testQParser() throws Exception {
-        GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 4;
-        final String qstr = "a,b,c";
-        final String cost = "1000";
-        final String delimiter = ",";
+        GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 3;
+        String delimiter = ",";
+        String qstr = "a,b,c";
+        String cost = "1000";
 
-        final SolrParams localParams = params("cost", cost, "f", fName, "delimiter", delimiter);
+        SolrParams localParams = params("cost", cost, "f", fName, "delimiter", delimiter);
         req.setParams(params("q", "*:*", "fq", "{!acl " + solrParamsToQParserString(localParams) + " }" + qstr));
         QParser qParser = new GroupLevelQParser(qstr, localParams, req.getParams(), req);
         Query parsedQuery = qParser.parse();
@@ -55,8 +55,16 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
         assertTrue("group length gte GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND should produce post filter"
                 , parsedQuery instanceof GroupLevelFilter);
 
-        // assertEquals(qParser.getParam("cost"), cost);
-        // assertEquals(qParser.getParam("delimiter"), delimiter);
+        assertEquals(qParser.getParam("delimiter"), delimiter);
+        assertEquals(qParser.getParam("cost"), cost);
+
+        String tooLowCost = "90";
+        localParams = params("cost", tooLowCost, "f", fName, "delimiter", delimiter);
+        req.setParams(params("q", "*:*", "fq", "{!acl " + solrParamsToQParserString(localParams) + " }" + qstr));
+        qParser = new GroupLevelQParser(qstr, localParams, req.getParams(), req);
+        qParser.parse();
+
+        assertEquals(qParser.getParam("cost"), Integer.toString(GroupLevelUtils.POST_FILTER_LOWER_BOUND));
 
     }
 
