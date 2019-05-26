@@ -8,6 +8,11 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*
+* integration tests:
+* ==================
+* tests the plugin from end to end taking in account all the involved components and test it against solr core
+* */
 
 public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
 
@@ -17,26 +22,25 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     @BeforeClass
     public static void beforeClass() throws Exception {
         initCore("solrconfig.xml", "schema-string-doc-vals.xml");
+
+        deleteByQueryAndGetVersion("*:*", params());
+        idCounter.set(0);
+
+        indexSampleData();
     }
 
     @Before
-    public void before() throws Exception {
-        deleteByQueryAndGetVersion("*:*", params());
-        idCounter.set(0);
+    public void before() {
     }
 
     @Test
-    public void groupLevelQParserPluginPreFilterTest() throws Exception {
-        indexSampleData();
+    public void groupLevelQParserPluginPreFilterTest() {
 
         // TODO - seems  to be a design problem - do we really want to let the client control the group level?
         //  like that one could bypass the client and fetch data out of his group level
         assertQ(req("q", "*:*"),
                 "//*[@numFound='10']");
 
-
-        // TODO - does groups have to be indexed to support Pre-Filter?
-        // TODO - does cost take into account if Pre-Filter? what if negative? seems like it doesn't really matter to solr..
         assertQ(req("q", "*:*", "fq", "{!acl cache=false cost=-10 f=groups delimiter=','}a"),
                 "//*[@numFound='10']");
 
@@ -44,6 +48,11 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
         assertQ("cost should be fixed if out of the filter type range - 1000 to 99",
                 req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}a,b,c"),
                 "//*[@numFound='10']");
+    }
+
+
+    @Test
+    public void groupLevelQParserPluginPreFilterNegativeTest() {
 
         assertQ("user's groups levels does not fit to the existing documents group levels",
                 req("q", "*:*", "fq", "{!acl cache=false cost=65 f=groups delimiter=','}d"),
@@ -51,8 +60,7 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     }
 
     @Test
-    public void groupLevelQParserPluginPostFilterTest() throws Exception {
-        indexSampleData();
+    public void groupLevelQParserPluginPostFilterTest() {
 
         GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 1;
 
@@ -74,8 +82,7 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
     }
 
     @Test
-    public void groupLevelQParserPluginExceptionTest() throws Exception {
-        indexSampleData();
+    public void groupLevelQParserPluginExceptionTest() {
 
         assertQEx("should fail because no groups were supplied",
                 "groups must be supplied",
@@ -84,7 +91,7 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
 
     }
 
-    private void indexSampleData() throws Exception {
+    private static void indexSampleData() throws Exception {
         String[] mockGroups = new String[]{"a", "b", "c"};
 
         for (int i = 0; i < 10; i++) {
