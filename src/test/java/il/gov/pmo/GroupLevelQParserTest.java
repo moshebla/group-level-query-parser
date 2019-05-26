@@ -11,7 +11,6 @@ import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.search.ExtendedQueryBase;
 import org.apache.solr.search.QParser;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.apache.solr.common.params.SolrParams;
 import org.mockito.Mockito;
@@ -35,7 +34,8 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
         IndexSchema mockSchema = Mockito.mock(IndexSchema.class);
         FieldType mockType = Mockito.mock(FieldType.class);
         SolrQueryRequest reqMock = Mockito.mock(LocalSolrQueryRequest.class);
-        Mockito.doAnswer((x) -> x.getArgumentAt(0, String.class).equals(fName) ? mockType : null).when(mockSchema).getFieldType(Mockito.anyString());
+        Mockito.doAnswer((x) -> x.getArgumentAt(0, String.class).equals(fName) ? null : mockType)
+                .when(mockSchema).getFieldType(Mockito.anyString());
         Mockito.doReturn(mockSchema).when(reqMock).getSchema();
         req = reqMock;
     }
@@ -52,36 +52,38 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
         assertEquals(qParser.getParam("delimiter"), delimiter);
         assertEquals(qParser.getParam("cost"), cost);
 
-        qParser = getQParser(cost="90");
+        qParser = getQParser("90");
         parsedQuery = qParser.parse();
         assertEquals("lowest cost value is " + GroupLevelUtils.POST_FILTER_LOWER_BOUND + " when running Post-Filter",
                 ((GroupLevelFilter) parsedQuery).getCost(), GroupLevelUtils.POST_FILTER_LOWER_BOUND);
 
         GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 4;
-        qParser = getQParser(cost="90");
+        qParser = getQParser("90");
         parsedQuery = qParser.parse();
         assertTrue("group length lte GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND should produce Pre-Filter"
                 , parsedQuery instanceof ExtendedQueryBase);
         assertEquals("cost should be between 0 and " + GroupLevelUtils.PRE_FILTER_UPPER_BOUND + " when running Pre-Filter",
                 ((ExtendedQueryBase) parsedQuery).getCost(), GroupLevelUtils.tryParseParamInt(cost, CommonParams.COST));
 
-        qParser = getQParser(cost = "1000");
+        qParser = getQParser("1000");
         parsedQuery = qParser.parse();
         assertEquals("cost should be between 0 and " + GroupLevelUtils.PRE_FILTER_UPPER_BOUND + " when running Pre-Filter",
                 ((ExtendedQueryBase) parsedQuery).getCost(), GroupLevelUtils.PRE_FILTER_UPPER_BOUND);
-    }
 
-    // TODO - check this
-    @Ignore
-    @Test
-    public void testQParserFails() throws Exception {
-        QParser qParser = getQParser(cost="-1");
-        Query parsedQuery = qParser.parse();
+        GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 4;
+        qParser = getQParser("-1");
+        parsedQuery = qParser.parse();
 
         assertEquals("cost should be between 0 and " + GroupLevelUtils.PRE_FILTER_UPPER_BOUND + " when running Pre-Filter",
-                ((ExtendedQueryBase) parsedQuery).getCost(), GroupLevelUtils.PRE_FILTER_UPPER_BOUND);
+                0, ((ExtendedQueryBase) parsedQuery).getCost());
 
+        GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 2;
+        parsedQuery = qParser.parse();
+
+        assertEquals("cost should be gte " + GroupLevelUtils.POST_FILTER_LOWER_BOUND + " when running Post-Filter",
+                GroupLevelUtils.POST_FILTER_LOWER_BOUND, ((ExtendedQueryBase) parsedQuery).getCost());
     }
+
 
     @Test
     public void testCalcCost() throws Exception {
@@ -97,6 +99,33 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
         assertEquals(expectedCost, actualCost);
     }
 
+    @Test
+    public void testSetCost() throws Exception {
+        QParser qParser = getQParser(cost);
+        ExtendedQueryBase extendedQueryBase = (ExtendedQueryBase) qParser.getQuery();
+
+        // should update both Query and QueryParser localParams
+        groupLevelQParser.setCost(extendedQueryBase, Integer.parseInt(cost));
+
+        assertEquals("set cost should set the Query's cost filed",
+                extendedQueryBase.getCost(),
+                Integer.parseInt(cost));
+        assertEquals("set cost should reset the QueryParser's localParams",
+                params("cost", cost, "f", fName, "delimiter", GroupLevelUtils.GROUPS_DELIMITER).toString(),
+                qParser.getLocalParams().toString());
+    }
+
+    @Test
+    public void testCreatePreFilter() throws Exception {
+        GroupLevelQParser qParser = (GroupLevelQParser) getQParser(cost);
+        String[] splitGroups = qstr.split(GroupLevelUtils.GROUPS_DELIMITER);
+
+        ExtendedQueryBase extendedQueryBase = qParser.createPreFilter(fName, splitGroups);
+
+        assertNotNull(extendedQueryBase);
+        assertEquals(extendedQueryBase.toString(), "filter(groups:(" + String.join(" ", splitGroups) + "))");
+    }
+
     private QParser getQParser(String cost) {
         return getQParser(cost, ",");
     }
@@ -109,7 +138,10 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
     private static String solrParamsToQParserString(SolrParams params) {
         StringBuilder stringBuilder = new StringBuilder();
-        params.forEach(x -> stringBuilder.append(x.getKey()).append("=")
+
+        params.forEach(x -> stringBuilder
+                .append(x.getKey())
+                .append("=")
                 .append(String.join(",", x.getValue()))
                 .append(" ")
         );

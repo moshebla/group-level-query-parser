@@ -6,6 +6,7 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.CommonParams;
+import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.query.FilterQuery;
 import org.apache.solr.request.SolrQueryRequest;
@@ -56,20 +57,33 @@ public class GroupLevelQParser extends QParser {
         String[] splitGroups = qstr.split(delimiter);
         int cost = calcCost(splitGroups);
 
+        // pre-filter or post-filter
         ExtendedQueryBase q = cost >= GroupLevelUtils.POST_FILTER_LOWER_BOUND ? new GroupLevelFilter(GroupLevelUtils.objectListToObjectSet(splitGroups),
                 fName, delimiter.charAt(0)) : createPreFilter(fName, splitGroups);
-        q.setCost(cost);
+
+        setCost(q, cost);
         return q;
+    }
+
+    void setCost(ExtendedQueryBase q, int cost){
+        localParams = ModifiableSolrParams.of(localParams).set(CommonParams.COST, cost);
+        q.setCost(cost);
     }
 
     int calcCost(String[] splitGroups) {
         Object costParam = localParams.get(CommonParams.COST);
-        int cost = costParam != null ? GroupLevelUtils.tryParseParamInt(costParam, CommonParams.COST) : 0;
+
+        int cost = 0;
+        if(costParam != null){
+            int parsedCost = GroupLevelUtils.tryParseParamInt(costParam, CommonParams.COST);
+            if(parsedCost > 0)
+                cost = parsedCost;
+        }
         // ensure user does not set a large or query as a pre filter
         return splitGroups.length >= GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND ? Math.max(cost, GroupLevelUtils.POST_FILTER_LOWER_BOUND) : Math.min(cost, GroupLevelUtils.PRE_FILTER_UPPER_BOUND);
     }
 
-    private ExtendedQueryBase createPreFilter(String fName, String[] splitGroups) {
+    ExtendedQueryBase createPreFilter(String fName, String[] splitGroups) {
         FieldType ft = req.getSchema().getFieldType(fName);
         List<BytesRef> bytesRefs = new ArrayList<>(splitGroups.length);
         BytesRefBuilder term = new BytesRefBuilder();

@@ -4,7 +4,6 @@ import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.common.SolrException;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,18 +67,10 @@ public class GroupLevelQParserPluginTest extends SolrTestCaseJ4 {
         assertQ("user's groups levels does not fit to the existing documents group levels",
                 req("q", "*:*", "fq", "{!acl cache=false cost=1000 f=groups delimiter=','}d"),
                 "//*[@numFound='0']");
-    }
 
-    @Ignore
-    @Test
-    public void groupLevelQParserPluginPostFilterTestFails() throws Exception {
-
-        // TODO - in case where cost is different and get corrected by the condition in parse method
-        //  the cost is being override to the original cost (here 30) in QParser.getQuery() [called after parse() (this function)]
         assertQ("cost should be fixed if out of the filter type range - 30 to 100",
                 req("q", "*:*", "fq", "{!acl cache=false cost=30 f=groups delimiter=','}a,b,c"),
                 "//*[@numFound='10']");
-
     }
 
     @Test
