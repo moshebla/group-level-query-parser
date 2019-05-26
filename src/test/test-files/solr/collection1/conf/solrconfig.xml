@@ -26,7 +26,7 @@
     <lib dir="${solr.install.dir:../../../..}/dist/plugins/" regex=".*\.jar" />
 
     <queryParser name="acl" class="il.gov.pmo.GroupLevelQParserPlugin" >
-        <str name="preFilterGroupBound">2</str>
+        <str name="maxPreFilterGroupBound">2</str>
     </queryParser>
 
     <directoryFactory name="DirectoryFactory"
