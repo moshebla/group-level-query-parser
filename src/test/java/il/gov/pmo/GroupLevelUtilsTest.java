@@ -2,9 +2,7 @@ package il.gov.pmo;
 
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.common.SolrException;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.Set;
 import java.util.UUID;
@@ -28,18 +26,15 @@ public class GroupLevelUtilsTest extends SolrTestCaseJ4 {
         assertEquals(testInt, parsedInt);
     }
 
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
-
     @Test
     public void tryParseParamIntExceptionTest() {
 
         String testInt = "this is not an int";
         String paramName = "testParam";
-        exceptionRule.expect(SolrException.class);
-        exceptionRule.expectMessage("could not parse specified " + paramName + ": " + testInt);
-
-        GroupLevelUtils.tryParseParamInt(testInt, paramName);
+        SolrException e = expectThrows(SolrException.class, () -> GroupLevelUtils.tryParseParamInt(testInt, paramName));
+        final String expectedMessage = "could not parse specified " + paramName + ": " + testInt;
+        assertEquals(SolrException.ErrorCode.BAD_REQUEST.code, e.code());
+        assertTrue(e.getMessage().contains(expectedMessage));
     }
 
     @Test

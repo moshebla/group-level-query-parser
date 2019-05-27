@@ -16,7 +16,7 @@ class GroupLevelUtils {
         try {
             return Integer.parseInt(integer.toString());
         } catch (NumberFormatException e) {
-            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR,
+            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
                     "could not parse specified " + paramName + ": " + integer.toString()
             );
         }
