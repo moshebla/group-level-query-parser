@@ -43,8 +43,12 @@ public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {
         return classHash() ^ ((fName.hashCode()) * allowedGroups.hashCode());
     }
 
-    private class GroupLevelFilterCollector extends DelegatingCollector {
+    class GroupLevelFilterCollector extends DelegatingCollector {
         SortedSetDocValues fieldValues;
+
+        void setFieldValues(SortedSetDocValues fieldValues){
+            this.fieldValues = fieldValues;
+        }
 
         @Override
         public void collect(int doc) throws IOException {
