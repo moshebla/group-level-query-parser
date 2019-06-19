@@ -23,11 +23,11 @@ import org.mockito.Mockito;
 
 public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
-    private static int cost = 1000;
+    private static final int DEFAULT_COST = 1000;
     private static String qstr = "a,b,c";
     private static String[] groupsList = qstr.split(GroupLevelUtils.GROUPS_DELIMITER);
     private static final String fName = "groups";
-    private static ModifiableSolrParams params = params("type", "acl", "cache", "false", "cost", Integer.toString(cost), "f", fName, "delimiter", ",", "v", "a,b,c");
+    private static ModifiableSolrParams params = params("type", "acl", "cache", "false", "cost", Integer.toString(DEFAULT_COST), "f", fName, "delimiter", ",", "v", "a,b,c");
     private static GroupLevelQParser groupLevelQParser = new GroupLevelQParser(qstr, SolrParams.wrapDefaults(params, null), null, null);
     private static SolrQueryRequest req;
 
@@ -48,7 +48,7 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
     @Test
     public void QParserFilterTypeDecisionTest() throws Exception {
-
+        int cost = 1000;
         QParser qParser = getQParser(cost, GroupLevelUtils.GROUPS_DELIMITER);
         Query parsedQuery = qParser.parse();
 
@@ -66,7 +66,7 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
     @Test
     public void QParserCostFixByFilterTypeTest() throws Exception {
-
+        int cost = DEFAULT_COST;
         QParser qParser = getQParser(90);
         Query parsedQuery = qParser.parse();
         assertEquals("lowest cost value is " + GroupLevelUtils.POST_FILTER_COST_LOWER_BOUND + " when running Post-Filter",
@@ -100,7 +100,7 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
     @Test
     public void CalcCostTest() {
-
+        int cost = DEFAULT_COST;
         int expectedCost = GroupLevelUtils.PRE_FILTER_COST_UPPER_BOUND;
         GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND = 4;
         int actualCost = groupLevelQParser.calcCost(groupsList);
@@ -114,6 +114,7 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
     @Test
     public void SetCostTest() throws Exception {
+        int cost = DEFAULT_COST;
         QParser qParser = getQParser(cost);
         ExtendedQueryBase extendedQueryBase = (ExtendedQueryBase) qParser.getQuery();
 
@@ -130,6 +131,7 @@ public class GroupLevelQParserTest extends SolrTestCaseJ4 {
 
     @Test
     public void CreatePreFilterTest() {
+        int cost = DEFAULT_COST;
         GroupLevelQParser qParser = (GroupLevelQParser) getQParser(cost);
         String[] splitGroups = qstr.split(GroupLevelUtils.GROUPS_DELIMITER);
 
