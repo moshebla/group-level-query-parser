@@ -1,5 +1,6 @@
-package il.gov.pmo;
+package il.gov.pmo.query;
 
+import il.gov.pmo.GroupLevelUtils;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.util.BytesRef;

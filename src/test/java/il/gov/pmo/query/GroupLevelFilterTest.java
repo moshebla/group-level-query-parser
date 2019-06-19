@@ -1,5 +1,7 @@
-package il.gov.pmo;
+package il.gov.pmo.query;
 
+import il.gov.pmo.GroupLevelUtils;
+import il.gov.pmo.query.GroupLevelFilter;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.LeafCollector;
@@ -17,7 +19,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import il.gov.pmo.GroupLevelFilter.GroupLevelFilterCollector;
+import il.gov.pmo.query.GroupLevelFilter.GroupLevelFilterCollector;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;

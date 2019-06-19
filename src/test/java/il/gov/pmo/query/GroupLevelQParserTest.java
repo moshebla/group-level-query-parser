@@ -1,5 +1,8 @@
-package il.gov.pmo;
+package il.gov.pmo.query;
 
+import il.gov.pmo.GroupLevelUtils;
+import il.gov.pmo.query.GroupLevelFilter;
+import il.gov.pmo.query.GroupLevelQParser;
 import org.apache.lucene.search.Query;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.common.params.ModifiableSolrParams;

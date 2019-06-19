@@ -1,5 +1,6 @@
-package il.gov.pmo;
+package il.gov.pmo.query;
 
+import il.gov.pmo.GroupLevelUtils;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.common.SolrException;
 import org.junit.Before;

@@ -1,10 +1,10 @@
-package il.gov.pmo;
+package il.gov.pmo.query;
 
+import il.gov.pmo.GroupLevelLookUp;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.solr.common.SolrException;
 import org.apache.solr.search.DelegatingCollector;
 import org.apache.solr.search.ExtendedQueryBase;
 import org.apache.solr.search.PostFilter;
@@ -43,7 +43,7 @@ public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {
         return classHash() ^ ((fName.hashCode()) * allowedGroups.hashCode());
     }
 
-    class GroupLevelFilterCollector extends DelegatingCollector {
+    class GroupLevelFilterCollector extends DelegatingCollector implements GroupLevelLookUp {
         SortedSetDocValues fieldValues;
 
         void setFieldValues(SortedSetDocValues fieldValues){
@@ -52,21 +52,8 @@ public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {
 
         @Override
         public void collect(int doc) throws IOException {
-            boolean hasValue = fieldValues.advanceExact(doc);
-
-            if (!hasValue) {
-                throw new SolrException(SolrException.ErrorCode.SERVER_ERROR,
-                        "No value was indexed for docID " + doc + " under field " + fName);
-            }
-
-            long ord = 0;
-            while (ord != SortedSetDocValues.NO_MORE_ORDS) {
-                String fieldValue = fieldValues.lookupOrd(ord).utf8ToString();
-                if (allowedGroups.contains(fieldValue)) {
-                    super.collect(doc);
-                    break;
-                }
-                ord = fieldValues.nextOrd();
+            if (isAllowed(doc)) {
+                super.collect(doc);
             }
         }
 
@@ -74,6 +61,21 @@ public class GroupLevelFilter extends ExtendedQueryBase implements PostFilter {
         protected void doSetNextReader(LeafReaderContext context) throws IOException {
             fieldValues = DocValues.getSortedSet(context.reader(), fName);
             super.doSetNextReader(context);
+        }
+
+        @Override
+        public SortedSetDocValues getFieldValues() {
+            return fieldValues;
+        }
+
+        @Override
+        public Set<String> getAllowedGroups() {
+            return allowedGroups;
+        }
+
+        @Override
+        public String getFieldName() {
+            return fName;
         }
     }
 }
