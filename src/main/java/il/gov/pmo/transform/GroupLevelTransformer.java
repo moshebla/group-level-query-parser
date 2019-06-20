@@ -1,6 +1,7 @@
 package il.gov.pmo.transform;
 
 import il.gov.pmo.GroupLevelLookUp;
+import il.gov.pmo.GroupLevelUtils;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.ReaderUtil;
@@ -10,8 +11,10 @@ import org.apache.solr.response.transform.DocTransformer;
 import org.apache.solr.search.SolrIndexSearcher;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class GroupLevelTransformer extends DocTransformer implements GroupLevelLookUp {
 
@@ -40,13 +43,25 @@ public class GroupLevelTransformer extends DocTransformer implements GroupLevelL
         final LeafReaderContext leafReaderContext = leaves.get(seg);
         fieldValues = DocValues.getSortedSet(leafReaderContext.reader(), getFieldName());
 
-        Object id = doc.getFieldValue(uniqueFieldName);
+        // Object id = doc.getFieldValue(uniqueFieldName);
+
         boolean isAllowed = isAllowed(docid);
+        // doc.clear();
         if (!isAllowed) {
-            doc.clear();
+            //doc.getFieldNames().stream().filter(x -> GroupLevelUtils.PUBLIC_FIELDS.contains(x)).forEach(doc::removeFields);
+            String[] cc = (String[]) doc.getFieldNames().stream().filter(x -> GroupLevelUtils.PUBLIC_FIELDS.contains(x)).toArray();
+            for (String i : doc.getFieldNames()) {
+                if (GroupLevelUtils.PUBLIC_FIELDS.contains(i)) {
+                }
+                else{
+
+                }
+            }
+        } else {
+
         }
-        doc.setField(uniqueFieldName, id);
-        doc.setField("isAllowed", isAllowed);
+        // doc.setField(uniqueFieldName, id);
+        // doc.setField("isAllowed", isAllowed);
     }
 
     @Override

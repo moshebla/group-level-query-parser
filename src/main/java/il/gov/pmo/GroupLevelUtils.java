@@ -1,8 +1,11 @@
 package il.gov.pmo;
 
 import org.apache.solr.common.SolrException;
+import org.omg.CORBA.PUBLIC_MEMBER;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,6 +14,7 @@ public class GroupLevelUtils {
     public static int PRE_FILTER_COST_UPPER_BOUND = 99;
     public static int POST_FILTER_COST_LOWER_BOUND = 100;
     public static String GROUPS_DELIMITER = ",";
+    public static List<Object> PUBLIC_FIELDS = new ArrayList<>();
 
     public static int tryParseParamInt(Object integer, String paramName) {
         try {

@@ -54,7 +54,12 @@
         <mergeScheduler class="${solr.mscheduler:org.apache.lucene.index.ConcurrentMergeScheduler}"/>
     </indexConfig>
 
-    <transformer name="groups" class="il.gov.pmo.transform.GroupLevelTransformerFactory"/>
+    <transformer name="groups" class="il.gov.pmo.transform.GroupLevelTransformerFactory">
+        <lst name="publicFields">
+            <str name="field">description</str>
+            <str name="field">description</str>
+        </lst>
+    </transformer>
 
 </config>
 
