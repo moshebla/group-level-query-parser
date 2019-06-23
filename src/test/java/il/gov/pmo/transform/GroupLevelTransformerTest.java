@@ -25,7 +25,6 @@ public class GroupLevelTransformerTest extends SolrTestCaseJ4 {
         assertU(commit());
     }
 
-    @Ignore
     @Test
     public void groupLevelTransformer() throws Exception {
         indexSampleData(10, new String[]{"a", "b", "c"}, new String[]{"description", "stam text lo meanyen", "classified", "only for allowed users"});

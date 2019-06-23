@@ -37,31 +37,28 @@ public class GroupLevelTransformer extends DocTransformer implements GroupLevelL
 
     @Override
     public void transform(SolrDocument doc, int docid) throws IOException {
+        SolrDocument tempDoc = new SolrDocument(doc);
+
         final SolrIndexSearcher searcher = context.getSearcher();
         final List<LeafReaderContext> leaves = searcher.getIndexReader().leaves();
         final int seg = ReaderUtil.subIndex(docid, leaves);
         final LeafReaderContext leafReaderContext = leaves.get(seg);
         fieldValues = DocValues.getSortedSet(leafReaderContext.reader(), getFieldName());
 
-        // Object id = doc.getFieldValue(uniqueFieldName);
 
         boolean isAllowed = isAllowed(docid);
-        // doc.clear();
         if (!isAllowed) {
-            //doc.getFieldNames().stream().filter(x -> GroupLevelUtils.PUBLIC_FIELDS.contains(x)).forEach(doc::removeFields);
-            String[] cc = (String[]) doc.getFieldNames().stream().filter(x -> GroupLevelUtils.PUBLIC_FIELDS.contains(x)).toArray();
-            for (String i : doc.getFieldNames()) {
-                if (GroupLevelUtils.PUBLIC_FIELDS.contains(i)) {
-                }
-                else{
-
+            doc.clear();
+            for (String fieldName : tempDoc.getFieldNames()) {
+                if(!GroupLevelUtils.PUBLIC_FIELDS.contains(fieldName)){
+                    doc.setField(fieldName, doc.getFieldValue(fieldName));
                 }
             }
         } else {
-
+            // do nothing
         }
-        // doc.setField(uniqueFieldName, id);
-        // doc.setField("isAllowed", isAllowed);
+
+        doc.setField("isAllowed", isAllowed);
     }
 
     @Override

@@ -9,28 +9,30 @@ import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.transform.DocTransformer;
 import org.apache.solr.response.transform.TransformerFactory;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GroupLevelTransformerFactory extends TransformerFactory {
 
     private final static String allowedGroupsParam = "allowedGroups";
     private final static String delimiterParam = "delimiter";
     private final static String PUBLIC_FIELDS_PARAM = "publicFields";
-    private Object value = null;
+    private final static String[] PERMANENT_FILED_PARAMS = {"id", "_version_"};
 
     @Override
     public void init(NamedList args) {
         Object publicFields = args.get(PUBLIC_FIELDS_PARAM);
-        GroupLevelUtils.PUBLIC_FIELDS.add("id");
-        if( publicFields != null ) {
-            NamedList nlPublicFields = ((NamedList) publicFields);
-            Object[] allowedFields = nlPublicFields.getAll("field").toArray();
-            GroupLevelUtils.PUBLIC_FIELDS = Arrays.stream(allowedFields).distinct().collect(Collectors.toList());
-//            GroupLevelUtils.PUBLIC_FIELDS =  Arrays.stream(allowedFields).distinct().toArray(String[]::new); // unique allowed fields
+
+        if (publicFields != null) {
+            List fields = ((NamedList) publicFields).getAll("field");
+            Stream uniqueFields = fields.stream().distinct();
+            GroupLevelUtils.PUBLIC_FIELDS.addAll((ArrayList<String>) uniqueFields.collect(Collectors.toList()));
         }
+
+        Collections.addAll(GroupLevelUtils.PUBLIC_FIELDS, PERMANENT_FILED_PARAMS);
     }
 
     @Override
