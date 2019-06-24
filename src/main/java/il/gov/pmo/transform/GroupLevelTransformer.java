@@ -11,10 +11,8 @@ import org.apache.solr.response.transform.DocTransformer;
 import org.apache.solr.search.SolrIndexSearcher;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public class GroupLevelTransformer extends DocTransformer implements GroupLevelLookUp {
 
@@ -24,7 +22,7 @@ public class GroupLevelTransformer extends DocTransformer implements GroupLevelL
 
     private SortedSetDocValues fieldValues;
 
-    public GroupLevelTransformer(String fieldName, String uniqueFieldName, Set<String> allowedGroups) {
+    GroupLevelTransformer(String fieldName, String uniqueFieldName, Set<String> allowedGroups) {
         this.fieldName = fieldName;
         this.uniqueFieldName = uniqueFieldName;
         this.allowedGroups = allowedGroups;
@@ -37,7 +35,8 @@ public class GroupLevelTransformer extends DocTransformer implements GroupLevelL
 
     @Override
     public void transform(SolrDocument doc, int docid) throws IOException {
-        SolrDocument tempDoc = new SolrDocument(doc);
+        SolrDocument tempDoc = new SolrDocument();
+        tempDoc.putAll(doc);
 
         final SolrIndexSearcher searcher = context.getSearcher();
         final List<LeafReaderContext> leaves = searcher.getIndexReader().leaves();
@@ -45,17 +44,14 @@ public class GroupLevelTransformer extends DocTransformer implements GroupLevelL
         final LeafReaderContext leafReaderContext = leaves.get(seg);
         fieldValues = DocValues.getSortedSet(leafReaderContext.reader(), getFieldName());
 
-
         boolean isAllowed = isAllowed(docid);
         if (!isAllowed) {
             doc.clear();
             for (String fieldName : tempDoc.getFieldNames()) {
-                if(!GroupLevelUtils.PUBLIC_FIELDS.contains(fieldName)){
-                    doc.setField(fieldName, doc.getFieldValue(fieldName));
+                if(GroupLevelUtils.PUBLIC_FIELDS.contains(fieldName)){
+                    doc.setField(fieldName, tempDoc.getFieldValue(fieldName));
                 }
             }
-        } else {
-            // do nothing
         }
 
         doc.setField("isAllowed", isAllowed);

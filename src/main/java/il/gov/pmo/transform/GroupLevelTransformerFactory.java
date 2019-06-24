@@ -20,7 +20,7 @@ public class GroupLevelTransformerFactory extends TransformerFactory {
     private final static String allowedGroupsParam = "allowedGroups";
     private final static String delimiterParam = "delimiter";
     private final static String PUBLIC_FIELDS_PARAM = "publicFields";
-    private final static String[] PERMANENT_FILED_PARAMS = {"id", "_version_"};
+    private final static String[] PERMANENT_FILED_PARAMS = {"id", "_version_", "isAllowed"};
 
     @Override
     public void init(NamedList args) {

@@ -1,13 +1,16 @@
 package il.gov.pmo.transform;
 
+import il.gov.pmo.GroupLevelUtils;
 import org.apache.solr.SolrTestCaseJ4;
-import org.apache.solr.client.solrj.io.Tuple;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
-import org.junit.After;
+import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.response.BasicResultContext;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GroupLevelTransformerTest extends SolrTestCaseJ4 {
@@ -17,27 +20,51 @@ public class GroupLevelTransformerTest extends SolrTestCaseJ4 {
     @BeforeClass
     public static void beforeClass() throws Exception {
         initCore("solrconfig.xml", "schema-string-doc-vals.xml");
+
+        String[] extraFieldsToIndex = new String[]{"description", "stam text lo meanyen", "classified", "only for allowed users"};
+        indexSampleData(1, new String[]{"a", "b", "c"}, extraFieldsToIndex);
     }
 
-    @After
-    public void cleanup() {
+    @AfterClass
+    public static void cleanup() {
         assertU(delQ("*:*"));
         assertU(commit());
     }
 
     @Test
-    public void groupLevelTransformer() throws Exception {
-        indexSampleData(10, new String[]{"a", "b", "c"}, new String[]{"description", "stam text lo meanyen", "classified", "only for allowed users"});
-        assertQ(req("q", "id:1", "fl", "*,[groups allowedGroups=z f=groups]"),
-                "//*[@name=\"isAllowed\" and text()=\"false\"]");
+    public void groupLevelTransformerUserAllowedTest() throws Exception {
+        String[] extraFieldsToIndex = new String[]{"description", "stam text lo meanyen", "classified", "only for allowed users"};
+        indexSampleData(1, new String[]{"a"}, extraFieldsToIndex);
 
-//        indexSampleData(10, new String[]{"a", "b", "c"}, new String[]{"classified", "only for allowed users"});
-//        assertQ(req("q", "id:1", "fl", "*,[groups allowedGroups=z f=groups]"),
-//                "//*[@name=\"isAllowed\" and text()=\"false\"]");
-//        cleanup();
-//        indexSampleData(7);
-//        assertQ(req("q", "*:*"),
-//                "//*[@numFound='7']");
+        // check specific field values
+        assertQ("when user allowed all field should be present",
+                req("q", "id:1", "fl", "*,[groups allowedGroups=a f=groups]"),
+                "/response/result[@numFound=\"1\"]/doc/*[(@name=\"id\" and text()=\"1\")]",
+                "/response/result/doc/*[(@name=\"classified\" and text()=\"only for allowed users\")]",
+                "/response/result/doc/*[(@name=\"description\" and text()=\"stam text lo meanyen\")]",
+                "/response/result/doc/*[@name=\"_version_\"]",
+                "/response/result/doc/*[(@name=\"isAllowed\" and text()=\"true\")]");
+    }
+
+    @Test
+    public void groupLevelTransformerUserNotAllowedTest() throws Exception {
+        try (SolrQueryRequest solrQueryRequest = req("q", "id:1", "fl", "*,[groups allowedGroups=z f=groups]")) {
+            // check specific field values
+            assertQ("when user not allowed only public field supposed to be present",
+                    solrQueryRequest,
+                    "/response/result[@numFound=\"1\"]/doc/*[(@name=\"id\" and text()=\"1\")]",
+                    "/response/result/doc/*[(@name=\"description\" and text()=\"stam text lo meanyen\")]",
+                    "/response/result/doc/*[@name=\"_version_\"]",
+                    "/response/result/doc/*[(@name=\"isAllowed\" and text()=\"false\")]");
+
+            // check field existence
+            BasicResultContext basicResultContext = (BasicResultContext) h.queryAndResponse("/select", solrQueryRequest).getResponse();
+            Iterator<SolrDocument> docsStreamer = basicResultContext.getProcessedDocuments();
+            while (docsStreamer.hasNext()) {
+                SolrDocument solrDocument = docsStreamer.next();
+                assertTrue("when user not allowed only public field supposed to be present", GroupLevelUtils.PUBLIC_FIELDS.containsAll(solrDocument.getFieldNames()));
+            }
+        }
     }
 
     private static void indexSampleData(int size) throws Exception {
@@ -59,6 +86,5 @@ public class GroupLevelTransformerTest extends SolrTestCaseJ4 {
             addAndGetVersion(sdoc, params("wt", "json"));
         }
         assertU(commit());
-        //JQ(req("q", "*:*"));
     }
 }
