@@ -6,7 +6,7 @@
 
   <groupId>il.gov.pmo.pmo</groupId>
   <artifactId>query-parser-example</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
 
   <name>query-parser-example</name>
   <!-- FIXME change it to the project's website -->
@@ -109,4 +109,40 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <!-- Activate this profile to build a shaded jar without unneeded dependencies -->
+      <id>release</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.solr</groupId>
+          <artifactId>solr-core</artifactId>
+          <version>${solr.version}</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>${maven.shade.plugin.version}</version>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+                <configuration>
+                  <outputFile>target/${project.artifactId}-deploy-${version}.jar</outputFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
