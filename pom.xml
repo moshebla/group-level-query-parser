@@ -5,10 +5,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>il.gov.pmo.pmo</groupId>
-  <artifactId>query-parser-example</artifactId>
+  <artifactId>group-level-query-parser</artifactId>
   <version>1.0</version>
 
-  <name>query-parser-example</name>
+  <name>group-level-query-parser</name>
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
