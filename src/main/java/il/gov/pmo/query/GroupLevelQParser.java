@@ -1,5 +1,6 @@
-package il.gov.pmo;
+package il.gov.pmo.query;
 
+import il.gov.pmo.GroupLevelUtils;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.util.BytesRef;
@@ -58,14 +59,14 @@ public class GroupLevelQParser extends QParser {
         int cost = calcCost(splitGroups);
 
         // pre-filter or post-filter
-        ExtendedQueryBase q = cost >= GroupLevelUtils.POST_FILTER_LOWER_BOUND ? new GroupLevelFilter(GroupLevelUtils.objectListToObjectSet(splitGroups),
+        ExtendedQueryBase q = cost >= GroupLevelUtils.POST_FILTER_COST_LOWER_BOUND ? new GroupLevelFilter(GroupLevelUtils.objectListToObjectSet(splitGroups),
                 fName, delimiter.charAt(0)) : createPreFilter(fName, splitGroups);
 
         setCost(q, cost);
         return q;
     }
 
-    void setCost(ExtendedQueryBase q, int cost){
+    void setCost(ExtendedQueryBase q, int cost) {
         localParams = ModifiableSolrParams.of(localParams).set(CommonParams.COST, cost);
         q.setCost(cost);
     }
@@ -74,13 +75,13 @@ public class GroupLevelQParser extends QParser {
         Object costParam = localParams.get(CommonParams.COST);
 
         int cost = 0;
-        if(costParam != null){
+        if (costParam != null) {
             int parsedCost = GroupLevelUtils.tryParseParamInt(costParam, CommonParams.COST);
-            if(parsedCost > 0)
+            if (parsedCost > 0)
                 cost = parsedCost;
         }
         // ensure user does not set a large or query as a pre filter
-        return splitGroups.length >= GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND ? Math.max(cost, GroupLevelUtils.POST_FILTER_LOWER_BOUND) : Math.min(cost, GroupLevelUtils.PRE_FILTER_UPPER_BOUND);
+        return splitGroups.length >= GroupLevelUtils.MAX_PRE_FILTER_GROUP_BOUND ? Math.max(cost, GroupLevelUtils.POST_FILTER_COST_LOWER_BOUND) : Math.min(cost, GroupLevelUtils.PRE_FILTER_COST_UPPER_BOUND);
     }
 
     ExtendedQueryBase createPreFilter(String fName, String[] splitGroups) {

@@ -1,28 +1,32 @@
 package il.gov.pmo;
 
 import org.apache.solr.common.SolrException;
+import org.omg.CORBA.PUBLIC_MEMBER;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class GroupLevelUtils {
-    static int MAX_PRE_FILTER_GROUP_BOUND = 80;
-    static int PRE_FILTER_UPPER_BOUND = 99;
-    static int POST_FILTER_LOWER_BOUND = 100;
-    static String GROUPS_DELIMITER = ",";
+public class GroupLevelUtils {
+    public static int MAX_PRE_FILTER_GROUP_BOUND = 80;
+    public static int PRE_FILTER_COST_UPPER_BOUND = 99;
+    public static int POST_FILTER_COST_LOWER_BOUND = 100;
+    public static String GROUPS_DELIMITER = ",";
+    public static ArrayList<String> PUBLIC_FIELDS = new ArrayList<>();
 
-    static int tryParseParamInt(Object integer, String paramName) {
+    public static int tryParseParamInt(Object integer, String paramName) {
         try {
             return Integer.parseInt(integer.toString());
         } catch (NumberFormatException e) {
-            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR,
+            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
                     "could not parse specified " + paramName + ": " + integer.toString()
             );
         }
     }
 
-    static Set<String> objectListToObjectSet(String[] objectList) {
+    public static Set<String> objectListToObjectSet(String[] objectList) {
         return Arrays.stream(objectList)
                 .collect(Collectors.toSet());
     }
